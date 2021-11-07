@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -26,31 +25,35 @@ func main() {
 		fmt.Printf("init setting failed, err: %v\n", err)
 		return
 	}
+
 	// 2. init log
-	if err := logger.Init(); err != nil {
+	if err := logger.Init(settings.GlobalConfig.LogConfig); err != nil {
 		fmt.Printf("init logger failed, err: %v\n", err)
 		return
 	}
 	defer zap.L().Sync()
 	zap.L().Debug("logger init success..\n")
+
 	// 3. init mysql
-	if err := mysql.Init(); err != nil {
+	if err := mysql.Init(settings.GlobalConfig.MysqlConfig); err != nil {
 		fmt.Printf("init mysql failed, err: %v\n", err)
 		return
 	}
 	defer mysql.Close()
+
 	// 4. init redis
-	if err := redis.Init(); err != nil {
+	if err := redis.Init(settings.GlobalConfig.RedisConfig); err != nil {
 		fmt.Printf("init redis failed, err: %v\n", err)
 		return
 	}
 	defer redis.Close()
+
 	// 5. register router
 	r := routers.Setup()
 
 	// 6. start and shutdown
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", viper.GetString("app.port")),
+		Addr:    fmt.Sprintf(":%d", settings.GlobalConfig.Port),
 		Handler: r,
 	}
 
